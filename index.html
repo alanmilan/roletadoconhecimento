@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <title>Roleta do Sorteio Mensal</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+        body { 
+            margin: 0;
+            padding: 0;
+            font-family: 'Orbitron', sans-serif;
+            color: #fff;
+            background: radial-gradient(circle at top, #810404, #0d0a1f 80%);
+            display: flex;
+            flex-direction: column;
+            align-items: center; 
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .logo-canto {
+            position: absolute;
+            top: 20px;
+            left: 25px;
+            width: 120px;
+            opacity: 0.9;
+            filter: drop-shadow(0 0 10px #00e6ff);
+        }
+
+        .banner-topo {
+            width: 100%;
+            max-width: 520px;
+            margin-top: 80px; 
+            margin-bottom: 50px; 
+        }
+        
+        .roleta-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 1000px; 
+        }
+        
+        .roleta-container {
+            width: 1000px;
+            margin: 0 auto; 
+            border: 4px solid rgba(0, 255, 200, 0.3);
+            border-radius: 20px;
+            background: rgba(20, 20, 40, 0.7);
+            backdrop-filter: blur(12px);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0,255,200,0.15);
+        }
+
+       
+        .sidebar {
+            width: 1000px; 
+            max-height: 300px; 
+            margin-top: 40px; 
+            
+            overflow-y: auto; 
+            padding: 20px;
+            border: 4px solid rgba(255, 100, 0, 0.3);
+            border-radius: 20px;
+            background: rgba(40, 20, 20, 0.7);
+            box-shadow: 0 0 30px rgba(255,100,0,0.15);
+        }
+
+        .sidebar h3 {
+            margin-top: 0;
+            color: #ffaa00;
+            text-shadow: 0 0 5px #ffcc00;
+            border-bottom: 1px solid rgba(255, 100, 0, 0.5);
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+
+        #lista-itens {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 14px;
+        }
+
+        #lista-itens li {
+            padding: 8px 0; 
+            color: #ccc;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+            cursor: pointer; 
+            transition: color 0.2s;
+        }
+
+        #lista-itens li:hover {
+            color: #00ffcc; 
+        }
+
+        #lista-itens li:last-child {
+            border-bottom: none;
+        }
+
+        
+        #item-selecionado-display {
+            width: 300px; 
+            min-height: 300px; 
+            background: rgba(20, 20, 40, 0.9);
+            border: 4px solid rgba(0, 255, 200, 0.5);
+            border-radius: 20px;
+            
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            
+            position: fixed; 
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%); 
+            z-index: 1000; 
+            box-shadow: 0 0 40px rgba(0,255,200,0.3);
+            opacity: 0; 
+            visibility: hidden; 
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+            padding: 0; 
+            box-sizing: content-box; 
+        }
+        
+        #item-selecionado-display.dragging {
+            cursor: grabbing;
+            transition: none; 
+        }
+
+        #item-selecionado-display.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+      
+        .drag-handle {
+            width: 100%;
+            height: 30px;
+            background: linear-gradient(90deg, #00ffcc55, #00aaff55);
+            border-top-left-radius: 16px;
+            border-top-right-radius: 16px;
+            cursor: grab;
+            position: relative;
+            text-align: center;
+            line-height: 30px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #000;
+            box-sizing: border-box;
+            user-select: none; 
+        }
+        
+        .close-button {
+            position: absolute;
+            top: 0px; 
+            right: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff4d4d; 
+            cursor: pointer;
+            transition: color 0.2s, transform 0.2s;
+            line-height: 30px; 
+            background: none; 
+            border: none;
+            padding: 0;
+            text-shadow: 0 0 5px rgba(255, 77, 77, 0.5);
+            z-index: 1001;
+        }
+
+        .close-button:hover {
+            color: #ff0000;
+            transform: scale(1.1);
+        }
+        
+        
+        .display-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+        }
+
+        #item-selecionado-img {
+            max-width: 95%;
+            max-height: 250px; 
+            object-fit: contain; 
+            border-radius: 10px;
+        }
+
+        #item-selecionado-nome { 
+            margin-top: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #00ffcc;
+            text-shadow: 0 0 5px #00ffff;
+            text-align: center;
+        }
+
+
+        .roleta {
+            display: flex;
+            transition: transform 12s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: translateX(0);
+        }
+
+        .item {
+            min-width: 200px;
+            height: 200px; 
+            margin: 0 12px;
+            background: linear-gradient(145deg, #242b45, #1b1f33);
+            border-radius: 16px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            color: #bfeaff;
+            text-shadow: 0 0 4px #00d9ff;
+            transition: 0.3s;
+            transform: scale(1);
+        }
+        
+        .item.highlight {
+            background: linear-gradient(145deg, #00ffcc, #0088ff);
+            box-shadow: 0 0 40px #00ffff, inset 0 0 10px #ffffff;
+            color: #fff;
+            transform: scale(1.15);
+            z-index: 2;
+        }
+
+        .item img {
+            max-width: 90%;
+            max-height: 130px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+
+        .roleta-pointer {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 25px solid transparent;
+            border-right: 25px solid transparent;
+            border-top: 40px solid #ffcc00;
+            filter: drop-shadow(0 0 10px #ffcc00);
+            z-index: 10;
+        }
+
+        #resultado {
+            margin-top: 30px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ffcc;
+            text-shadow: 0 0 8px #00ffff;
+        }
+
+        .botoes {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        #botaoGirar {
+            padding: 14px 30px;
+            font-size: 16px;
+            font-family: 'Orbitron', sans-serif;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: 0.3s;
+        }
+
+        #botaoGirar {
+            background: linear-gradient(90deg, #00ffcc, #00aaff);
+            color: #000;
+            font-weight: bold;
+            box-shadow: 0 0 10px #00e6ff;
+        }
+
+        #botaoGirar:hover {
+            background: linear-gradient(90deg, #00ccff, #00ffaa);
+            box-shadow: 0 0 20px #00ffff;
+        }
+
+        footer {
+            margin-top: 50px;
+            color: #aaa;
+            font-size: 14px;
+            text-shadow: 0 0 5px #00ffff55;
+        }
+
+        footer a {
+            color: #00ffff;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-shadow: 0 0 10px #00ffff;
+        }
+    </style>
+</head>
+<body>
+
+    <img src="images/contrilaologo.jpg" alt="Logo" class="logo-canto">
+    <img src="images/banner.png" alt="Banner" class="banner-topo">
+    
+    <div class="roleta-area">
+        <div class="roleta-container">
+            <div class="roleta" id="roleta"></div>
+            <div class="roleta-pointer"></div>
+        </div>
+
+        <h2 id="resultado"></h2>
+
+        <div class="botoes">
+            <button id="botaoGirar" onclick="girarRoleta()">Girar Roleta</button>
+        </div>
+
+        <div class="sidebar">
+            <h3>Lista de Agentes</h3>
+            <ul id="lista-itens">
+                </ul>
+        </div>
+    </div>
+
+    <div id="item-selecionado-display">
+        <div class="drag-handle" id="drag-handle">
+            Visualizador de Item
+            <button class="close-button" id="close-item-display">X</button> 
+        </div>
+        <div class="display-content">
+            <img id="item-selecionado-img" src="" alt="Item Selecionado">
+            <span id="item-selecionado-nome"></span>
+        </div>
+    </div>
+
+    <audio id="tickSound" src="tick_sound.mp3" preload="auto"></audio>
+    <audio id="dloreSound" src="dlore.mp3" preload="auto"></audio>
+
+
+    <script>
+        const itensBase = [
+            "Buckshot | NSWC SEAL", "Dragomir | Sabre", "The Elite Mr. Muhlik | Elite Crew",
+            "Seal Team 6 Soldier | NSWC SEAL", "3rd Commando Company | KSK", "Soldier | Phoenix",
+            "'Two Times' McCoy | USAF TACP", "Sergeant Bombson | SWAT", '"The Doctor" Romanov | Sabre',
+            "Rezan the Redshirt | Sabre", "Bio-Haz Specialist | SWAT", "Prof. Shahmat | Elite Crew",
+            "Dragomir | Sabre Footsoldier", "Enforcer | Phoenix", "John 'Van Healen' Kask | SWAT",
+            "B Squadron Officer | SAS", "Slingshot | Phoenix", "Maximus | Sabre", "Chem-Haz Specialist | SWAT",
+            "Markus Delrow | FBI HRT", "Blackwolf | Sabre", "Osiris | Elite Crew", "Ground Rebel | Elite Crew",
+            "'Blueberries' Buckshot | NSWC SEAL", "1st Lieutenant Farlow | SWAT", "Michael Syfers | FBI Sniper",
+            "'Two Times' McCoy | TACP Cavalry", "Sous-Lieutenant Medic | Gendarmerie Nationale"
+        ];
+
+        const imagens = {
+            "Buckshot | NSWC SEAL": "images/buckshot.png",
+            "Dragomir | Sabre": "images/dragomir.png",
+            "The Elite Mr. Muhlik | Elite Crew": "images/muhlik.png",
+            "Seal Team 6 Soldier | NSWC SEAL": "images/soldier6.png",
+            "3rd Commando Company | KSK": "images/3rdcommando.png",
+            "Soldier | Phoenix": "images/phoenix.png",
+            "'Two Times' McCoy | USAF TACP": "images/mccoy.png",
+            "Sergeant Bombson | SWAT": "images/bombson.png",
+            '"The Doctor" Romanov | Sabre': "images/romanov.png",
+            "Rezan the Redshirt | Sabre": "images/rezanready.png",
+            "Bio-Haz Specialist | SWAT": "images/biohaz.png",
+            "Prof. Shahmat | Elite Crew": "images/shahmat.png",
+            "Dragomir | Sabre Footsoldier": "images/dragomir.png",
+            "Enforcer | Phoenix": "images/enforcer.png",
+            "John 'Van Healen' Kask | SWAT": "images/kask.png",
+            "B Squadron Officer | SAS": "images/bsquadron.png",
+            "Slingshot | Phoenix": "images/slingshot.png",
+            "Maximus | Sabre": "images/maximus.png",
+            "Chem-Haz Specialist | SWAT": "images/chemhaz.png",
+            "Markus Delrow | FBI HRT": "images/delrow.png",
+            "Blackwolf | Sabre": "images/blackwolf.png",
+            "Osiris | Elite Crew": "images/osirirs.png",
+            "Ground Rebel | Elite Crew": "images/groundrebel.png",
+            "'Blueberries' Buckshot | NSWC SEAL": "images/bluebuckshot.png",
+            "1st Lieutenant Farlow | SWAT": "images/farlow.png",
+            "Michael Syfers | FBI Sniper": "images/syfers.png",
+            "'Two Times' McCoy | TACP Cavalry": "images/2mccoy.png",
+            "Sous-Lieutenant Medic | Gendarmerie Nationale": "images/medic.png"
+        };
+
+        const roleta = document.getElementById("roleta");
+        const resultado = document.getElementById("resultado");
+        const tickSound = document.getElementById("tickSound");
+        const dloreSound = document.getElementById("dloreSound");
+        const listaItensUl = document.getElementById("lista-itens"); 
+        
+   
+        const itemSelecionadoDisplay = document.getElementById("item-selecionado-display");
+        const itemSelecionadoImg = document.getElementById("item-selecionado-img");
+        const itemSelecionadoNome = document.getElementById("item-selecionado-nome");
+        const closeItemDisplayButton = document.getElementById("close-item-display"); 
+        const dragHandle = document.getElementById("drag-handle");
+        
+        
+        let isDragging = false;
+        let offset = { x: 0, y: 0 };
+        
+        const itemFullWidth = 224; 
+        const spinDuration = 12000; 
+        const spinEndDelay = 200; 
+        
+        const roletaContainerWidth = 1000; 
+        
+        let isSpinning = false;
+        let lastSortedItem = null;
+
+
+        
+      
+        dragHandle.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            itemSelecionadoDisplay.classList.add('dragging');
+            
+            
+            const rect = itemSelecionadoDisplay.getBoundingClientRect();
+            
+         
+            itemSelecionadoDisplay.style.transform = 'none'; 
+            
+            
+            itemSelecionadoDisplay.style.left = rect.left + 'px';
+            itemSelecionadoDisplay.style.top = rect.top + 'px';
+
+           
+            offset.x = e.clientX - rect.left;
+            offset.y = e.clientY - rect.top;
+
+        
+            itemSelecionadoDisplay.style.transition = 'none';
+            
+            e.preventDefault(); 
+        });
+
+        
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            
+            
+            itemSelecionadoDisplay.style.left = (e.clientX - offset.x) + 'px';
+            itemSelecionadoDisplay.style.top = (e.clientY - offset.y) + 'px';
+        });
+
+        
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                itemSelecionadoDisplay.classList.remove('dragging');
+            }
+        });
+
+
+        function carregarItens() {
+            const salvo = localStorage.getItem("itensRoleta");
+            return salvo ? JSON.parse(salvo) : Object.fromEntries(itensBase.map(i => [i, 1]));
+        }
+
+        function salvarItens(itens) {
+            localStorage.setItem("itensRoleta", JSON.stringify(itens));
+        }
+
+        let itens = carregarItens();
+        
+        function atualizarListaItens() {
+            listaItensUl.innerHTML = "";
+            const disponiveis = Object.entries(itens)
+                                    .filter(([_, qtd]) => qtd > 0)
+                                    .map(([nome]) => nome);
+
+            if (disponiveis.length === 0) {
+                const li = document.createElement("li");
+                li.textContent = "Nenhum item disponível.";
+                listaItensUl.appendChild(li);
+                return;
+            }
+
+            disponiveis.forEach(nome => {
+                const li = document.createElement("li");
+                li.textContent = nome;
+                listaItensUl.appendChild(li);
+                
+                li.addEventListener('click', () => exibirItemClicado(nome));
+            });
+        }
+
+        function exibirItemClicado(nomeDoItem) {
+            
+            if (isDragging) return;
+            
+            const imageUrl = imagens[nomeDoItem];
+            if (imageUrl) {
+                itemSelecionadoImg.src = imageUrl;
+                itemSelecionadoImg.alt = nomeDoItem;
+                itemSelecionadoNome.textContent = nomeDoItem;
+                itemSelecionadoDisplay.classList.add('visible'); 
+                
+                
+                itemSelecionadoDisplay.style.transform = 'translate(-50%, -50%)';
+                itemSelecionadoDisplay.style.left = '50%';
+                itemSelecionadoDisplay.style.top = '50%';
+                itemSelecionadoDisplay.style.transition = 'opacity 0.3s ease-in-out, visibility 0.3s ease-in-out';
+            } else {
+                console.warn(`Imagem para "${nomeDoItem}" não encontrada.`);
+            }
+        }
+
+        
+        closeItemDisplayButton.addEventListener('click', () => {
+            itemSelecionadoDisplay.classList.remove('visible');
+        });
+
+        
+        itemSelecionadoDisplay.addEventListener('click', (event) => {
+             
+            if (event.target === itemSelecionadoDisplay) {
+                itemSelecionadoDisplay.classList.remove('visible');
+            }
+        });
+        
+        function reconstruirRoleta(nomeSorteado) {
+            roleta.innerHTML = "";
+            for (let i = 0; i < 100; i++) {
+                const nome = (i === 50) ? nomeSorteado : getRandomDisponivel();
+                const div = document.createElement("div");
+                div.className = "item";
+                div.dataset.nome = nome;
+                div.innerHTML = `
+                    <img src="${imagens[nome]}" alt="${nome}">
+                    <span>${nome}</span>
+                `;
+                roleta.appendChild(div);
+            }
+        }
+
+        function getRandomDisponivel() {
+            const disponiveis = Object.entries(itens).filter(([_, qtd]) => qtd > 0).map(([nome]) => nome);
+            if (disponiveis.length === 0) {
+                 return itensBase[Math.floor(Math.random() * itensBase.length)];
+            }
+            return disponiveis[Math.floor(Math.random() * disponiveis.length)];
+        }
+
+        function girarRoleta() {
+            if (isSpinning) return;
+            
+            const disponiveis = Object.entries(itens).filter(([_, qtd]) => qtd > 0);
+            
+            if (disponiveis.length === 0) {
+                resultado.textContent = "🎉 Todos os itens já foram sorteados!";
+                return;
+            }
+
+            isSpinning = true;
+            
+            const nomeSorteado = getRandomDisponivel();
+            reconstruirRoleta(nomeSorteado);
+
+            const items = roleta.querySelectorAll(".item");
+            const alvo = items[50];
+            const destino = alvo.offsetLeft;
+
+            roleta.style.transition = "none";
+            roleta.style.transform = "translateX(0)";
+            void roleta.offsetWidth; 
+            
+            setTimeout(() => {
+                roleta.style.transition = `transform ${spinDuration / 1000}s cubic-bezier(0.16, 1, 0.3, 1)`;
+                
+                const centroDoContainer = (roletaContainerWidth / 2) - (itemFullWidth / 2);
+                const deslocamento = destino - centroDoContainer;
+                
+                roleta.style.transform = `translateX(-${deslocamento}px)`;
+                
+                iniciarTickDuranteGiro(spinDuration);
+            });
+
+            setTimeout(() => {
+                items.forEach(i => i.classList.remove("highlight"));
+                alvo.classList.add("highlight");
+                resultado.textContent = `🎯 Sorteado: ${nomeSorteado}`;
+                
+                itens[nomeSorteado] = 0;
+                salvarItens(itens);
+                
+                isSpinning = false;
+                lastSortedItem = nomeSorteado;
+                
+                atualizarListaItens(); 
+                
+            }, spinDuration + spinEndDelay);
+        }
+
+        function iniciarTickDuranteGiro(duracaoTotal) {
+            let lastX = null, lastTickTime = 0, lastHighlightIndex = -1;
+            const tickMin = 30, tickMax = 250;
+            const startTime = performance.now();
+            const center = roletaContainerWidth / 2;
+
+            function loop(now) {
+                const elapsed = now - startTime;
+                if (elapsed >= duracaoTotal - 500) return;
+                
+                const matrix = new DOMMatrix(getComputedStyle(roleta).transform);
+                const currentX = matrix.m41;
+
+                if (lastX !== null) {
+                    const delta = Math.abs(currentX - lastX);
+                    const idealInterval = Math.max(tickMin, Math.min(tickMax, 800 / (delta + 0.1)));
+                    
+                    if (now - lastTickTime > idealInterval) {
+                        const visualCenter = Math.abs(currentX) + center; 
+                        const index = Math.floor(visualCenter / itemFullWidth);
+                        
+                        if (index !== lastHighlightIndex) {
+                            tickSound.pause();
+                            tickSound.currentTime = 0;
+                            tickSound.play();
+                            lastTickTime = now;
+                            lastHighlightIndex = index;
+                        }
+                    }
+                }
+                lastX = currentX;
+                requestAnimationFrame(loop);
+            }
+            requestAnimationFrame(loop);
+        }
+
+        reconstruirRoleta(getRandomDisponivel());
+        atualizarListaItens(); 
+    </script>
+</body>
+</html>
