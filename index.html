@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
-    <title>Roleta do Conhecimento</title>
+    <title>Roleta do Sorteio Mensal</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
 
@@ -33,7 +33,6 @@
             max-width: 520px;
             margin-top: 80px; 
             margin-bottom: 50px; 
-            
         }
         
         .roleta-area {
@@ -55,7 +54,7 @@
             box-shadow: 0 0 30px rgba(0,255,200,0.15);
         }
 
-       
+        
         .sidebar {
             width: 1000px; 
             max-height: 300px; 
@@ -136,7 +135,7 @@
             visibility: visible;
         }
 
-      
+        
         .drag-handle {
             width: 100%;
             height: 30px;
@@ -237,6 +236,7 @@
         .item img {
             max-width: 90%;
             max-height: 130px;
+            object-fit: contain; 
             border-radius: 10px;
             margin-bottom: 8px;
         }
@@ -328,7 +328,7 @@
         </div>
 
         <div class="sidebar">
-            <h3>Lista de Agentes</h3>
+            <h3>Lista de Agentes e Prêmios</h3>
             <ul id="lista-itens">
                 </ul>
         </div>
@@ -359,7 +359,12 @@
             "B Squadron Officer | SAS", "Slingshot | Phoenix", "Maximus | Sabre", "Chem-Haz Specialist | SWAT",
             "Markus Delrow | FBI HRT", "Blackwolf | Sabre", "Osiris | Elite Crew", "Ground Rebel | Elite Crew",
             "'Blueberries' Buckshot | NSWC SEAL", "1st Lieutenant Farlow | SWAT", "Michael Syfers | FBI Sniper",
-            "'Two Times' McCoy | TACP Cavalry", "Sous-Lieutenant Medic | Gendarmerie Nationale"
+            "'Two Times' McCoy | TACP Cavalry", "Sous-Lieutenant Medic | Gendarmerie Nationale",
+            
+            
+            "Livro: Desafio aos Deuses", 
+            "Livro: O Andar do Bêbado",
+            "Livro: Nova Economia"
         ];
 
         const imagens = {
@@ -390,7 +395,12 @@
             "1st Lieutenant Farlow | SWAT": "images/farlow.png",
             "Michael Syfers | FBI Sniper": "images/syfers.png",
             "'Two Times' McCoy | TACP Cavalry": "images/2mccoy.png",
-            "Sous-Lieutenant Medic | Gendarmerie Nationale": "images/medic.png"
+            "Sous-Lieutenant Medic | Gendarmerie Nationale": "images/medic.png",
+            
+           
+            "Livro: Desafio aos Deuses": "images/desafio.png", 
+            "Livro: O Andar do Bêbado": "images/oandar.png",
+            "Livro: Nova Economia": "images/novaeconomia.png"
         };
 
         const roleta = document.getElementById("roleta");
@@ -399,7 +409,7 @@
         const dloreSound = document.getElementById("dloreSound");
         const listaItensUl = document.getElementById("lista-itens"); 
         
-   
+        
         const itemSelecionadoDisplay = document.getElementById("item-selecionado-display");
         const itemSelecionadoImg = document.getElementById("item-selecionado-img");
         const itemSelecionadoNome = document.getElementById("item-selecionado-nome");
@@ -421,7 +431,7 @@
 
 
         
-      
+        
         dragHandle.addEventListener('mousedown', (e) => {
             isDragging = true;
             itemSelecionadoDisplay.classList.add('dragging');
@@ -429,14 +439,14 @@
             
             const rect = itemSelecionadoDisplay.getBoundingClientRect();
             
-         
+            
             itemSelecionadoDisplay.style.transform = 'none'; 
             
             
             itemSelecionadoDisplay.style.left = rect.left + 'px';
             itemSelecionadoDisplay.style.top = rect.top + 'px';
 
-           
+            
             offset.x = e.clientX - rect.left;
             offset.y = e.clientY - rect.top;
 
@@ -460,14 +470,34 @@
             if (isDragging) {
                 isDragging = false;
                 itemSelecionadoDisplay.classList.remove('dragging');
+                itemSelecionadoDisplay.style.transition = 'opacity 0.3s ease-in-out, visibility 0.3s ease-in-out'; // Restaura a transição
             }
         });
 
 
         function carregarItens() {
             const salvo = localStorage.getItem("itensRoleta");
-            return salvo ? JSON.parse(salvo) : Object.fromEntries(itensBase.map(i => [i, 1]));
+            const itensSalvos = salvo ? JSON.parse(salvo) : {};
+            
+            
+            const itensAtuais = Object.fromEntries(itensBase.map(i => [i, 1]));
+
+            for (const item of itensBase) {
+                if (itensSalvos.hasOwnProperty(item)) {
+                    itensAtuais[item] = itensSalvos[item];
+                }
+            }
+            
+            
+            for (const item in itensSalvos) {
+                 if (!itensBase.includes(item)) {
+                     delete itensSalvos[item]; 
+                 }
+            }
+            
+            return itensAtuais;
         }
+
 
         function salvarItens(itens) {
             localStorage.setItem("itensRoleta", JSON.stringify(itens));
@@ -478,8 +508,8 @@
         function atualizarListaItens() {
             listaItensUl.innerHTML = "";
             const disponiveis = Object.entries(itens)
-                                    .filter(([_, qtd]) => qtd > 0)
-                                    .map(([nome]) => nome);
+                                        .filter(([_, qtd]) => qtd > 0)
+                                        .map(([nome]) => nome);
 
             if (disponiveis.length === 0) {
                 const li = document.createElement("li");
@@ -509,6 +539,7 @@
                 itemSelecionadoDisplay.classList.add('visible'); 
                 
                 
+                
                 itemSelecionadoDisplay.style.transform = 'translate(-50%, -50%)';
                 itemSelecionadoDisplay.style.left = '50%';
                 itemSelecionadoDisplay.style.top = '50%';
@@ -525,7 +556,7 @@
 
         
         itemSelecionadoDisplay.addEventListener('click', (event) => {
-             
+                 
             if (event.target === itemSelecionadoDisplay) {
                 itemSelecionadoDisplay.classList.remove('visible');
             }
@@ -549,6 +580,7 @@
         function getRandomDisponivel() {
             const disponiveis = Object.entries(itens).filter(([_, qtd]) => qtd > 0).map(([nome]) => nome);
             if (disponiveis.length === 0) {
+                
                  return itensBase[Math.floor(Math.random() * itensBase.length)];
             }
             return disponiveis[Math.floor(Math.random() * disponiveis.length)];
@@ -593,7 +625,8 @@
                 alvo.classList.add("highlight");
                 resultado.textContent = `🎯 Sorteado: ${nomeSorteado}`;
                 
-                itens[nomeSorteado] = 0;
+                
+                itens[nomeSorteado] = 0; 
                 salvarItens(itens);
                 
                 isSpinning = false;
@@ -619,6 +652,7 @@
 
                 if (lastX !== null) {
                     const delta = Math.abs(currentX - lastX);
+                    
                     const idealInterval = Math.max(tickMin, Math.min(tickMax, 800 / (delta + 0.1)));
                     
                     if (now - lastTickTime > idealInterval) {
@@ -645,4 +679,3 @@
     </script>
 </body>
 </html>
-
